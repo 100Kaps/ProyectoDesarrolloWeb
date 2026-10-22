@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Captura de Pedidos - Panadería San Carlos</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+  <header>
+    <h1>Panadería San Carlos - Captura de Pedidos</h1>
+    <nav>
+      <a href="/">Inicio</a>
+      <a href="/pedidos" class="active">Captura de Pedidos</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Formulario de Despacho Diario</h2>
+      <form id="form-pedido">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="select-sucursal">Sucursal:</label>
+            <select id="select-sucursal" required>
+              <option value="">Cargando sucursales...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="input-ruta">Ruta:</label>
+            <input type="text" id="input-ruta" placeholder="Ej. Ruta 3" value="Ruta 3" required>
+          </div>
+        </div>
+
+        <h3>Detalle por Clase de Pan</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Clase de Pan</th>
+              <th>Mañana</th>
+              <th>Resto</th>
+              <th>Tarde</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-panes-body">
+            <tr><td colspan="4">Cargando catálogo de productos...</td></tr>
+          </tbody>
+        </table>
+
+        <div style="margin-top: 1.5rem; text-align: right;">
+          <button type="submit" class="btn">Guardar Pedido</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/pedidos.js"></script>
+</body>
+</html>

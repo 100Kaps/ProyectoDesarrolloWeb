@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panadería San Carlos - Control de Producción</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+  <header>
+    <h1>Panadería San Carlos - UMG</h1>
+    <nav>
+      <a href="/" class="active">Inicio</a>
+      <a href="/pedidos">Captura de Pedidos</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Pedidos Registrados</h2>
+      <p>Listado general de pedidos enviados por las 5 sucursales.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>ID Pedido</th>
+            <th>Sucursal</th>
+            <th>Ruta</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-pedidos-body">
+          <tr><td colspan="5">Cargando pedidos...</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const body = document.getElementById('tabla-pedidos-body');
+      try {
+        const response = await API.getPedidos();
+        if (response.success && response.data.length > 0) {
+          body.innerHTML = response.data.map(p => `
+            <tr>
+              <td>${p.ID_PEDIDO}</td>
+              <td>${p.SUCURSAL}</td>
+              <td>${p.RUTA}</td>
+              <td>${p.FECHA}</td>
+              <td><span class="badge">${p.ESTADO}</span></td>
+            </tr>
+          `).join('');
+        } else {
+          body.innerHTML = '<tr><td colspan="5">No hay pedidos registrados aún.</td></tr>';
+        }
+      } catch (err) {
+        body.innerHTML = '<tr><td colspan="5">Error al cargar pedidos.</td></tr>';
+      }
+    });
+  </script>
+</body>
+</html>
