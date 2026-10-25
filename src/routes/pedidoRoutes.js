@@ -5,5 +5,6 @@ const pedidoController = require('../controllers/pedidoController');
 router.get('/', pedidoController.getPedidos);
 router.post('/', pedidoController.createPedido);
 router.get('/:id', pedidoController.getPedidoById);
+router.patch('/:id/estado', pedidoController.cambiarEstado);
 
 module.exports = router;

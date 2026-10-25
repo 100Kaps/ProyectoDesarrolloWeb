@@ -135,8 +135,37 @@ async function obtenerPedidoPorId(idPedido) {
   }
 }
 
+/*
+Actualizar el estado del pedido a ENTREGADO
+*/
+
+async function cambiarEstadoPedido(idPedido, nuevoEstado){
+  let connection;
+  try{
+    connection = await oracledb.getConnection(dbConfig);
+
+    const resutl = await connection.execute(
+     `UPDATE PEDIDOS_CABECERA
+      SET estado = :nuevoEstado
+      WHERE id_pedido = :idPedido`,
+      { nuevoEstado, idPedido },
+      { autoCommit: true } //Confirma el cambio en la base de datos
+    );
+
+    return result.rowsAffected > 0;
+  } catch (error) {
+    console.error('Error en pedidoService.cambiarEstadoPedido', error);
+    throw error;
+  } finally {
+    if (connection){
+      await connection.close();
+    }
+  }
+}
+
 module.exports = {
   crearPedidoCompleto,
   obtenerPedidos,
-  obtenerPedidoPorId
+  obtenerPedidoPorId,
+  cambiarEstadoPedido
 };

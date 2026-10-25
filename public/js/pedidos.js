@@ -82,3 +82,51 @@ async function guardarPedido(e) {
     alert('Ocurrió un error al enviar la solicitud al servidor.');
   }
 }
+
+// Ejemplo de renderizado dinámico de la fila
+const botonAccion = pedido.ESTADO === 'PENDIENTE' 
+  ? `<button class="btn-entregar" onclick="marcarComoEntregado(${pedido.ID_PEDIDO})">Marcar Entregado</button>`
+  : `<span class="badge-entregado">ENTREGADO</span>`;
+
+const filaHTML = `
+  <tr>
+    <td>${pedido.ID_PEDIDO}</td>
+    <td>${pedido.SUCURSAL}</td>
+    <td>${pedido.RUTA}</td>
+    <td>${pedido.ESTADO}</td>
+    <td>${botonAccion}</td>
+  </tr>
+`;
+
+// 1. Agregar la función al archivo
+async function marcarComoEntregado(idPedido) {
+  if (!confirm(`¿Estás seguro de marcar el pedido #${idPedido} como ENTREGADO?`)) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/pedidos/${idPedido}/estado`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ estado: 'ENTREGADO' })
+    });
+
+    const result = await response.json();
+
+    if (response.ok && result.success) {
+      alert(`El pedido #${idPedido} ha sido marcado como ENTREGADO.`);
+      if (typeof cargarPedidos === 'function') {
+        cargarPedidos();
+      } else {
+        location.reload();
+      }
+    } else {
+      alert(`Error: ${result.message}`);
+    }
+  } catch (error) {
+    console.error('Error al actualizar el estado:', error);
+    alert('Ocurrió un error al intentar cambiar el estado.');
+  }
+}

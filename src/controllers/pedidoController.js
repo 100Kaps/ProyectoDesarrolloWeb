@@ -106,8 +106,31 @@ async function getPedidoById(req, res) {
   }
 }
 
+async function cambiarEstado(req, res) {
+  try{
+    const { id } = req.params;
+    const { estado } = req.body;
+
+    if (!estado) {
+      return res.status(400).json({ success: false, message: 'El nuevo estado es requerido' });
+    }
+    
+    const actualizado = await pedidoService.cambiarEstadoPedido(id, estado);
+
+    if (actualizado){
+      return res.json({ success: true, message:`Pedido ${id} actualizado a ${estado}` });
+
+    } else {
+      return res.status(404).json({ success: false, message: 'Pedido no encontrado' });
+    }
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Error al cambiar estado del pedido', error: error.message });
+  }  
+}
+
 module.exports = {
   createPedido,
   getPedidos,
-  getPedidoById
+  getPedidoById,
+  cambiarEstado
 };
