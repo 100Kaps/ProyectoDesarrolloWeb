@@ -29,5 +29,16 @@ const API = {
   async getPedidoDetalle(idPedido) {
     const res = await fetch(`${API_BASE}/pedidos/${idPedido}`);
     return await res.json();
+  },
+
+  async cambiarEstadoPedido(idPedido, estado) {
+    const res = await fetch(`/api/pedidos/${idPedido}/estado`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ estado })
+    });
+    return await res.json();
   }
 };
