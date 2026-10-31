@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panadería San Carlos - Detalle de Pedido</title>
-  <link rel="stylesheet" href="../css/styles.css">
+  <!-- Ruta CSS relativa directa para la carpeta public -->
+  <link rel="stylesheet" href="./css/styles.css">
   <style>
     .info-header { margin-bottom: 20px; }
     .badge-turno {
@@ -22,6 +23,9 @@
 
   <header>
     <h1>Panadería San Carlos - Detalle de Pedido</h1>
+    <nav style="margin-top: 10px;">
+      <a href="./index.html">← Volver al Inicio</a>
+    </nav>
   </header>
 
   <main>
@@ -46,47 +50,63 @@
     </section>
   </main>
 
-  <script type="module" src="../js/api.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // Reemplaza con las claves reales de tu proyecto de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSy...", 
+      authDomain: "proyectodesarrolloweb-a1a36.firebaseapp.com",
+      projectId: "proyectodesarrolloweb-a1a36",
+      storageBucket: "proyectodesarrolloweb-a1a36.appspot.com",
+      messagingSenderId: "10355840983556789386",
+      appId: "1:10355840983556789386:web:..."
+    };
+
+    // Inicializar Firebase Firestore
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    async function cargarDetalle() {
       const urlParams = new URLSearchParams(window.location.search);
       const idPedido = urlParams.get('id');
 
       if (!idPedido) {
-        alert('No se especificó un ID de pedido.');
+        document.getElementById('encabezado-pedido').innerHTML = '<h2 style="color: #c2410c;">No se especificó un ID de pedido en la URL.</h2>';
+        document.getElementById('tabla-detalle-body').innerHTML = '<tr><td colspan="3">Sin información.</td></tr>';
         return;
       }
 
       try {
-        const response = await fetch(`/api/pedidos/${idPedido}`);
-        const result = await response.json();
+        // Consultar directamente el documento por ID en la colección "pedidos"
+        const docRef = doc(db, "pedidos", idPedido);
+        const docSnap = await getDoc(docRef);
 
-        if (response.ok && result.success) {
-          // Si el backend devuelve { pedido, detalles }
-          const pedido = result.data.pedido || result.data;
-          const detalles = result.data.detalles || pedido.detalles || [];
+        if (docSnap.exists()) {
+          const pedido = docSnap.data();
 
-          // Renderizar encabezado
+          // 1. Mostrar encabezado
           document.getElementById('encabezado-pedido').innerHTML = `
-            <h2>Pedido #${pedido.ID_PEDIDO || pedido.id_pedido}</h2>
-            <p><strong>Sucursal:</strong> ${pedido.SUCURSAL || pedido.sucursal} | 
-               <strong>Ruta:</strong> ${pedido.RUTA || pedido.ruta} | 
-               <strong>Fecha:</strong> ${pedido.FECHA || pedido.fecha} | 
-               <strong>Estado:</strong> ${pedido.ESTADO || pedido.estado}</p>
+            <h2>Pedido #${docSnap.id.substring(0, 6)}</h2>
+            <p><strong>Sucursal:</strong> ${pedido.sucursal || 'N/A'} | 
+               <strong>Ruta:</strong> ${pedido.ruta || 'N/A'} | 
+               <strong>Fecha:</strong> ${pedido.fecha || 'N/A'} | 
+               <strong>Estado:</strong> <span class="badge">${(pedido.estado || 'PENDIENTE').toUpperCase()}</span></p>
           `;
 
-          // Renderizar tabla de ítems
+          // 2. Mostrar productos
           const body = document.getElementById('tabla-detalle-body');
-          if (detalles && detalles.length > 0) {
+          const detalles = pedido.detalles || [];
+
+          if (detalles.length > 0) {
             body.innerHTML = detalles.map(d => {
-              const producto = d.PRODUCTO || d.producto || 'Sin Nombre';
-              const cantManana = d.CANT_MANANA || d.cant_manana || 0;
-              const cantResto = d.CANT_RESTO || d.cant_resto || 0;
-              const cantTarde = d.CANT_TARDE || d.cant_tarde || 0;
-              
+              const producto = d.producto || 'Producto sin nombre';
+              const cantManana = parseInt(d.cant_manana) || 0;
+              const cantResto = parseInt(d.cant_resto) || 0;
+              const cantTarde = parseInt(d.cant_tarde) || 0;
               const total = cantManana + cantResto + cantTarde;
 
-              // Crear lista visual con los turnos que tengan cantidad solicitada (> 0)
               let turnosHtml = [];
               if (cantManana > 0) turnosHtml.push(`<span class="badge-turno">Mañana: ${cantManana}</span>`);
               if (cantResto > 0) turnosHtml.push(`<span class="badge-turno">Resto: ${cantResto}</span>`);
@@ -97,22 +117,27 @@
               return `
                 <tr>
                   <td><strong>${producto}</strong></td>
-                  <td>${total}</td>
+                  <td><strong>${total}</strong></td>
                   <td>${desglose}</td>
                 </tr>
               `;
             }).join('');
           } else {
-            body.innerHTML = '<tr><td colspan="3">Este pedido no tiene productos registrados.</td></tr>';
+            body.innerHTML = '<tr><td colspan="3">Este pedido no contiene productos registrados.</td></tr>';
           }
         } else {
-          document.getElementById('encabezado-pedido').innerHTML = `<h2>Error: ${result.message}</h2>`;
+          document.getElementById('encabezado-pedido').innerHTML = '<h2 style="color: #c2410c;">El pedido solicitado no existe en la base de datos.</h2>';
+          document.getElementById('tabla-detalle-body').innerHTML = '<tr><td colspan="3">Sin registros.</td></tr>';
         }
       } catch (error) {
-        console.error('Error al obtener el detalle:', error);
-        document.getElementById('tabla-detalle-body').innerHTML = '<tr><td colspan="3">Error al cargar la información.</td></tr>';
+        console.error('Error al consultar Firestore:', error);
+        document.getElementById('encabezado-pedido').innerHTML = '<h2 style="color: #c2410c;">Error al conectar con la base de datos.</h2>';
+        document.getElementById('tabla-detalle-body').innerHTML = '<tr><td colspan="3">Verifica la consola para más información.</td></tr>';
       }
-    });
+    }
+
+    // Ejecutar al cargar la página
+    cargarDetalle();
   </script>
 </body>
 </html>

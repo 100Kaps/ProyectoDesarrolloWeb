@@ -3,59 +3,140 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Captura de Pedidos - Panadería San Carlos</title>
-  <link rel="stylesheet" href="/css/styles.css">
+  <title>Panadería San Carlos - Captura de Pedidos</title>
+  <!-- Ruta relativa al CSS directamente subiendo un nivel -->
+  <link rel="stylesheet" href="../css/styles.css">
 </head>
 <body>
 
   <header>
     <h1>Panadería San Carlos - Captura de Pedidos</h1>
     <nav>
-      <a href="/">Inicio</a>
-      <a href="/pedidos" class="active">Captura de Pedidos</a>
+      <a href="../index.html">Inicio</a>
+      <a href="./pedidos.html" class="active">Captura de Pedidos</a>
     </nav>
   </header>
 
   <main>
     <section class="card">
       <h2>Formulario de Despacho Diario</h2>
-      <form id="form-pedido">
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="select-sucursal">Sucursal:</label>
-            <select id="select-sucursal" required>
-              <option value="">Cargando sucursales...</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="input-ruta">Ruta:</label>
-            <input type="text" id="input-ruta" placeholder="Ej. Ruta 3" value="Ruta 3" required>
-          </div>
+      
+      <div style="display: flex; gap: 20px; align-items: center;">
+        <div style="flex: 1;">
+          <label for="select-sucursal"><strong>Sucursal:</strong></label><br>
+          <select id="select-sucursal" style="width: 100%; padding: 8px; margin-top: 5px;">
+            <option value="">Cargando sucursales...</option>
+          </select>
         </div>
-
-        <h3>Detalle por Clase de Pan</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Clase de Pan</th>
-              <th>Mañana</th>
-              <th>Resto</th>
-              <th>Tarde</th>
-            </tr>
-          </thead>
-          <tbody id="tabla-panes-body">
-            <tr><td colspan="4">Cargando catálogo de productos...</td></tr>
-          </tbody>
-        </table>
-
-        <div style="margin-top: 1.5rem; text-align: right;">
-          <button type="submit" class="btn">Guardar Pedido</button>
+        <div style="flex: 1;">
+          <label for="input-ruta"><strong>Ruta:</strong></label><br>
+          <input type="text" id="input-ruta" value="Ruta 1" placeholder="Escribe la ruta" style="width: 100%; padding: 8px; margin-top: 5px;">
         </div>
-      </form>
+      </div>
+
+      <h3 style="margin-top: 25px;">Detalle por Clase de Pan</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Clase de Pan</th>
+            <th>Mañana</th>
+            <th>Resto</th>
+            <th>Tarde</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-productos-body">
+          <tr><td colspan="4">Cargando lista de productos...</td></tr>
+        </tbody>
+      </table>
+
+      <div style="text-align: right; margin-top: 20px;">
+        <button id="btn-guardar" onclick="guardarPedido()" style="padding: 10px 25px; background-color: #16a34a; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Guardar Pedido</button>
+      </div>
     </section>
   </main>
 
-  <script src="/js/api.js"></script>
-  <script src="/js/pedidos.js"></script>
+  <!-- Importar api.js como módulo ES -->
+  <script type="module" src="../js/api.js"></script>
+  <script type="module">
+    let productosCargados = [];
+
+    async function inicializarFormulario() {
+      // Esperar brevemente si window.API aún no se ha adjuntado
+      if (!window.API || !window.API.getSucursales) {
+        setTimeout(inicializarFormulario, 300);
+        return;
+      }
+
+      // 1. Cargar Sucursales desde Firebase
+      const resSucursales = await window.API.getSucursales();
+      const selectSuc = document.getElementById('select-sucursal');
+      if (resSucursales.success && resSucursales.data.length > 0) {
+        selectSuc.innerHTML = resSucursales.data.map(s => 
+          `<option value="${s.nombre}">${s.nombre}</option>`
+        ).join('');
+      } else {
+        selectSuc.innerHTML = '<option value="">No hay sucursales registradas</option>';
+      }
+
+      // 2. Cargar Productos desde Firebase
+      const resProductos = await window.API.getProductos();
+      const bodyProd = document.getElementById('tabla-productos-body');
+      if (resProductos.success && resProductos.data.length > 0) {
+        productosCargados = resProductos.data;
+        bodyProd.innerHTML = productosCargados.map(p => `
+          <tr>
+            <td><strong>${p.nombre}</strong></td>
+            <td><input type="number" id="manana_${p.id}" value="0" min="0" style="width: 80px; text-align: center;"></td>
+            <td><input type="number" id="resto_${p.id}" value="0" min="0" style="width: 80px; text-align: center;"></td>
+            <td><input type="number" id="tarde_${p.id}" value="0" min="0" style="width: 80px; text-align: center;"></td>
+          </tr>
+        `).join('');
+      } else {
+        bodyProd.innerHTML = '<tr><td colspan="4">No hay productos registrados en la base de datos.</td></tr>';
+      }
+    }
+
+    window.guardarPedido = async function() {
+      const sucursal = document.getElementById('select-sucursal').value;
+      const ruta = document.getElementById('input-ruta').value;
+
+      if (!sucursal || !ruta) {
+        alert("Por favor selecciona una sucursal e ingresa la ruta.");
+        return;
+      }
+
+      const detalles = [];
+      productosCargados.forEach(p => {
+        const cantManana = parseInt(document.getElementById(`manana_${p.id}`).value) || 0;
+        const cantResto = parseInt(document.getElementById(`resto_${p.id}`).value) || 0;
+        const cantTarde = parseInt(document.getElementById(`tarde_${p.id}`).value) || 0;
+
+        if (cantManana > 0 || cantResto > 0 || cantTarde > 0) {
+          detalles.push({
+            producto: p.nombre,
+            cant_manana: cantManana,
+            cant_resto: cantResto,
+            cant_tarde: cantTarde
+          });
+        }
+      });
+
+      if (detalles.length === 0) {
+        alert("Debes ingresar al menos una cantidad para un producto.");
+        return;
+      }
+
+      const nuevoPedido = { sucursal, ruta, detalles };
+      const respuesta = await window.API.crearPedido(nuevoPedido);
+      if (respuesta.success) {
+        alert("¡Pedido guardado exitosamente en Firebase!");
+        window.location.href = "../index.html";
+      } else {
+        alert("Error al guardar el pedido: " + respuesta.message);
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', inicializarFormulario);
+  </script>
 </body>
 </html>
