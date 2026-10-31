@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panadería San Carlos - Control de Producción</title>
-  <link rel="stylesheet" href="../css/styles.css">
+  <!-- Ruta directa a la carpeta css -->
+  <link rel="stylesheet" href="./css/styles.css">
   <style>
     .btn-detalle {
       display: inline-block;
@@ -43,8 +44,9 @@
   <header>
     <h1>Panadería San Carlos - UMG</h1>
     <nav>
-      <a href="/" class="active">Inicio</a>
-      <a href="/pedidos">Captura de Pedidos</a>
+      <!-- Enlaces corregidos a archivos físicos HTML -->
+      <a href="./index.html" class="active">Inicio</a>
+      <a href="./views/pedidos.html">Captura de Pedidos</a>
     </nav>
   </header>
 
@@ -70,30 +72,22 @@
     </section>
   </main>
 
-  <script src="../js/api.js"></script>
+  <!-- Ruta directa a la carpeta js -->
+  <script src="./js/api.js"></script>
   <script>
-    // Function tapno mabaliwan ti estado ti pedido agingga 'ENTREGADO'
     async function marcarComoEntregado(idPedido) {
       if (!confirm(`¿Estás seguro de marcar el pedido #${idPedido} como ENTREGADO?`)) {
         return;
       }
 
       try {
-        const response = await fetch(`/api/pedidos/${idPedido}/estado`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ estado: 'ENTREGADO' })
-        });
-
-        const result = await response.json();
-
-        if (response.ok && result.success) {
+        // Asegúrate de que API.actualizarEstado exista en api.js
+        if (typeof API !== 'undefined' && API.actualizarEstado) {
+          await API.actualizarEstado(idPedido, 'ENTREGADO');
           alert(`El pedido #${idPedido} ha sido marcado como ENTREGADO.`);
-          cargarPedidos(); // Recargar la tabla automáticamente
+          cargarPedidos();
         } else {
-          alert(`Error: ${result.message || 'No se pudo actualizar el estado'}`);
+          alert("Error: El cliente API no tiene configurado la actualización en Firebase.");
         }
       } catch (error) {
         console.error('Error al actualizar el estado:', error);
@@ -101,27 +95,23 @@
       }
     }
 
-    // Function tapno maikabil dagiti pedidos iti tabla
     async function cargarPedidos() {
       const body = document.getElementById('tabla-pedidos-body');
       try {
         const response = await API.getPedidos();
         if (response.success && response.data.length > 0) {
           body.innerHTML = response.data.map(p => {
-            // Manejo de compatibilidad mayúsculas/minúsculas de Oracle
-            const idPed = p.ID_PEDIDO || p.id_pedido;
+            const idPed = p.ID_PEDIDO || p.id_pedido || p.id;
             const sucursal = p.SUCURSAL || p.sucursal;
             const ruta = p.RUTA || p.ruta;
             const fecha = p.FECHA || p.fecha;
             const estadoVal = (p.ESTADO || p.estado || '').toUpperCase();
 
-            // Botón según el estado actual
             const botonAccion = estadoVal === 'PENDIENTE'
-              ? `<button class="btn-entregar" onclick="marcarComoEntregado(${idPed})">Marcar Entregado</button>`
+              ? `<button class="btn-entregar" onclick="marcarComoEntregado('${idPed}')">Marcar Entregado</button>`
               : `<span class="badge-entregado">ENTREGADO</span>`;
 
-            // Enlace para abrir el detalle en una nueva pestaña (target="_blank")
-            const botonDetalle = `<a href="/pedidos/detalle?id=${idPed}" target="_blank" class="btn-detalle">Ver Detalle</a>`;
+            const botonDetalle = `<a href="./views/detalle-pedido.html?id=${idPed}" target="_blank" class="btn-detalle">Ver Detalle</a>`;
 
             return `
               <tr>
