@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panadería San Carlos - Control de Producción</title>
-  <!-- Ruta directa a la carpeta css -->
   <link rel="stylesheet" href="./css/styles.css">
   <style>
     .btn-detalle {
@@ -44,7 +43,7 @@
   <header>
     <h1>Panadería San Carlos - UMG</h1>
     <nav>
-      <!-- Enlaces corregidos a archivos físicos HTML -->
+      <!-- Navegación limpia hacia la raíz estática -->
       <a href="./index.html" class="active">Inicio</a>
       <a href="./views/pedidos.html">Captura de Pedidos</a>
     </nav>
@@ -72,7 +71,6 @@
     </section>
   </main>
 
-  <!-- Ruta directa a la carpeta js -->
   <script src="./js/api.js"></script>
   <script>
     async function marcarComoEntregado(idPedido) {
@@ -81,13 +79,12 @@
       }
 
       try {
-        // Asegúrate de que API.actualizarEstado exista en api.js
         if (typeof API !== 'undefined' && API.actualizarEstado) {
           await API.actualizarEstado(idPedido, 'ENTREGADO');
           alert(`El pedido #${idPedido} ha sido marcado como ENTREGADO.`);
           cargarPedidos();
         } else {
-          alert("Error: El cliente API no tiene configurado la actualización en Firebase.");
+          alert("Error: El cliente API no tiene configurada la actualización.");
         }
       } catch (error) {
         console.error('Error al actualizar el estado:', error);
@@ -111,7 +108,8 @@
               ? `<button class="btn-entregar" onclick="marcarComoEntregado('${idPed}')">Marcar Entregado</button>`
               : `<span class="badge-entregado">ENTREGADO</span>`;
 
-            const botonDetalle = `<a href="./views/detalle-pedido.html?id=${idPed}" target="_blank" class="btn-detalle">Ver Detalle</a>`;
+            // RUTA DIRECTA: Al estar en la misma carpeta public/, solo se llama a ./detalle-pedido.html
+            const botonDetalle = `<a href="./detalle-pedido.html?id=${idPed}" target="_blank" class="btn-detalle">Ver Detalle</a>`;
 
             return `
               <tr>

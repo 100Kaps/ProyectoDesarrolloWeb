@@ -32,7 +32,7 @@ app.use('/api/pedidos', pedidoRoutes);
 
 // Servir la página principal (Dashboard / Inicio)
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/views/index.html'));
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 // Servir la vista de capturas de pedidos por sucursal
@@ -46,8 +46,9 @@ app.get('/recetas', (req, res) => {
 });
 
 
-app.get('/pedidos/detalle', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/views/detalle-pedido.html'));
+// Servir el detalle del pedido desde la carpeta public/
+app.get('/detalle-pedido.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/detalle-pedido.html'));
 });
 
 // MANEJO DE ERRORES Y RUTAS NO ENCONTRADAS (404)
