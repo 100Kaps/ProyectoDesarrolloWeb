@@ -143,9 +143,44 @@ async function cambiarEstado(req, res) {
   }
 }
 
+async function getPedidoById(req, res) {
+  try {
+    const { id } = req.params;
+
+    if (!id || isNaN(id)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'ID de pedido inválido' 
+      });
+    }
+
+    const data = await pedidoService.obtenerPedidoPorId(id);
+
+    if (data) {
+      return res.status(200).json({ 
+        success: true, 
+        data 
+      });
+    } else {
+      return res.status(404).json({ 
+        success: false, 
+        message: `El pedido #${id} no existe.` 
+      });
+    }
+  } catch (error) {
+    console.error('Error en getPedidoById:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Error al consultar el detalle', 
+      error: error.message 
+    });
+  }
+}
+
 module.exports = {
   createPedido,
   getPedidos,
   getPedidoById,
-  cambiarEstado
+  cambiarEstado,
+  getPedidoById
 };

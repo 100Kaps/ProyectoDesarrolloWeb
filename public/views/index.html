@@ -5,6 +5,38 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panadería San Carlos - Control de Producción</title>
   <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .btn-detalle {
+      display: inline-block;
+      margin-left: 8px;
+      padding: 5px 10px;
+      background-color: #0284c7;
+      color: #ffffff;
+      text-decoration: none;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    .btn-detalle:hover {
+      background-color: #0369a1;
+    }
+    .btn-entregar {
+      padding: 5px 10px;
+      background-color: #16a34a;
+      color: #ffffff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9em;
+    }
+    .btn-entregar:hover {
+      background-color: #15803d;
+    }
+    .badge-entregado {
+      font-weight: bold;
+      color: #16a34a;
+      padding: 4px 8px;
+    }
+  </style>
 </head>
 <body>
 
@@ -19,7 +51,7 @@
   <main>
     <section class="card">
       <h2>Pedidos Registrados</h2>
-      <p>Listado general de pedidos enviados por las 5 sucursales.</p>
+      <p>Listado general de pedidos enviados por las sucursales.</p>
       <table>
         <thead>
           <tr>
@@ -28,7 +60,7 @@
             <th>Ruta</th>
             <th>Fecha</th>
             <th>Estado</th>
-            <th>Acción</th> <!-- Nueva columna para el botón -->
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody id="tabla-pedidos-body">
@@ -40,7 +72,7 @@
 
   <script src="/js/api.js"></script>
   <script>
-    // 1. Función para cambiar el estado del pedido en la API
+    // Function tapno mabaliwan ti estado ti pedido agingga 'ENTREGADO'
     async function marcarComoEntregado(idPedido) {
       if (!confirm(`¿Estás seguro de marcar el pedido #${idPedido} como ENTREGADO?`)) {
         return;
@@ -59,9 +91,9 @@
 
         if (response.ok && result.success) {
           alert(`El pedido #${idPedido} ha sido marcado como ENTREGADO.`);
-          cargarPedidos(); // Recarga la tabla de pedidos
+          cargarPedidos(); // Recargar la tabla automáticamente
         } else {
-          alert(`Error: ${result.message}`);
+          alert(`Error: ${result.message || 'No se pudo actualizar el estado'}`);
         }
       } catch (error) {
         console.error('Error al actualizar el estado:', error);
@@ -69,26 +101,39 @@
       }
     }
 
-    // 2. Función para cargar y renderizar los pedidos en la tabla
+    // Function tapno maikabil dagiti pedidos iti tabla
     async function cargarPedidos() {
       const body = document.getElementById('tabla-pedidos-body');
       try {
         const response = await API.getPedidos();
         if (response.success && response.data.length > 0) {
           body.innerHTML = response.data.map(p => {
-            // Si el estado es PENDIENTE, dibuja el botón. Si es ENTREGADO, muestra el texto.
-            const botonAccion = p.ESTADO === 'PENDIENTE'
-              ? `<button class="btn-entregar" onclick="marcarComoEntregado(${p.ID_PEDIDO})">Marcar Entregado</button>`
+            // Manejo de compatibilidad mayúsculas/minúsculas de Oracle
+            const idPed = p.ID_PEDIDO || p.id_pedido;
+            const sucursal = p.SUCURSAL || p.sucursal;
+            const ruta = p.RUTA || p.ruta;
+            const fecha = p.FECHA || p.fecha;
+            const estadoVal = (p.ESTADO || p.estado || '').toUpperCase();
+
+            // Botón según el estado actual
+            const botonAccion = estadoVal === 'PENDIENTE'
+              ? `<button class="btn-entregar" onclick="marcarComoEntregado(${idPed})">Marcar Entregado</button>`
               : `<span class="badge-entregado">ENTREGADO</span>`;
+
+            // Enlace para abrir el detalle en una nueva pestaña (target="_blank")
+            const botonDetalle = `<a href="/pedidos/detalle?id=${idPed}" target="_blank" class="btn-detalle">Ver Detalle</a>`;
 
             return `
               <tr>
-                <td>${p.ID_PEDIDO}</td>
-                <td>${p.SUCURSAL}</td>
-                <td>${p.RUTA}</td>
-                <td>${p.FECHA}</td>
-                <td><span class="badge">${p.ESTADO}</span></td>
-                <td>${botonAccion}</td>
+                <td>#${idPed}</td>
+                <td>${sucursal}</td>
+                <td>${ruta}</td>
+                <td>${fecha}</td>
+                <td><span class="badge">${estadoVal}</span></td>
+                <td>
+                  ${botonAccion}
+                  ${botonDetalle}
+                </td>
               </tr>
             `;
           }).join('');
@@ -96,11 +141,11 @@
           body.innerHTML = '<tr><td colspan="6">No hay pedidos registrados aún.</td></tr>';
         }
       } catch (err) {
+        console.error(err);
         body.innerHTML = '<tr><td colspan="6">Error al cargar pedidos.</td></tr>';
       }
     }
 
-    // Inicializar al cargar la página
     document.addEventListener('DOMContentLoaded', cargarPedidos);
   </script>
 </body>

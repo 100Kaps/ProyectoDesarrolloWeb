@@ -168,9 +168,65 @@ async function cambiarEstadoPedido(idPedido, nuevoEstado) {
   }
 }
 
+/**
+ * Obtiene la cabecera y el detalle de ítems de un pedido por su ID.
+ */
+// src/services/pedidoService.js
+
+async function obtenerPedidoPorId(idPedido) {
+  let connection;
+  try {
+    connection = await oracledb.getConnection(dbConfig);
+    const idNum = parseInt(idPedido, 10);
+
+    // 1. Cabecera
+    const resultCab = await connection.execute(
+      `SELECT c.id_pedido, 
+              s.nombre AS sucursal, 
+              TO_CHAR(c.fecha_pedido, 'YYYY-MM-DD HH24:MI') AS fecha, 
+              c.ruta, 
+              c.estado
+       FROM PEDIDOS_CABECERA c
+       JOIN SUCURSALES s ON c.id_sucursal = s.id_sucursal
+       WHERE c.id_pedido = :idNum`,
+      [idNum],
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    if (resultCab.rows.length === 0) return null;
+
+    const pedido = resultCab.rows[0];
+
+    // 2. Detalle con los turnos
+    const resultDet = await connection.execute(
+      `SELECT d.id_detalle, 
+              p.nombre AS producto, 
+              d.cant_manana, 
+              d.cant_resto, 
+              d.cant_tarde
+       FROM PEDIDOS_DETALLE d
+       JOIN PRODUCTOS p ON d.id_producto = p.id_producto
+       WHERE d.id_pedido = :idNum`,
+      [idNum],
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
+    );
+
+    return {
+      pedido: pedido,
+      detalles: resultDet.rows
+    };
+  } catch (error) {
+    console.error('Error en pedidoService.obtenerPedidoPorId:', error);
+    throw error;
+  } finally {
+    if (connection) await connection.close();
+  }
+}
+
 module.exports = {
   crearPedidoCompleto,
   obtenerPedidos,
   obtenerPedidoPorId,
-  cambiarEstadoPedido
+  cambiarEstadoPedido,
+  obtenerPedidoPorId
 };

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panadería San Carlos - Detalle de Pedido</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .info-header { margin-bottom: 20px; }
+    .badge-turno {
+      display: inline-block;
+      font-weight: bold;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background-color: #e0f2fe;
+      color: #0369a1;
+      margin-right: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Panadería San Carlos - Detalle de Pedido</h1>
+  </header>
+
+  <main>
+    <section class="card">
+      <div id="encabezado-pedido" class="info-header">
+        <h2>Cargando información del pedido...</h2>
+      </div>
+
+      <h3>Productos Solicitados</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Cantidad Total</th>
+            <th>Desglose por Turno / Jornada</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-detalle-body">
+          <tr><td colspan="3">Cargando detalles...</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const idPedido = urlParams.get('id');
+
+      if (!idPedido) {
+        alert('No se especificó un ID de pedido.');
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/pedidos/${idPedido}`);
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          // Si el backend devuelve { pedido, detalles }
+          const pedido = result.data.pedido || result.data;
+          const detalles = result.data.detalles || pedido.detalles || [];
+
+          // Renderizar encabezado
+          document.getElementById('encabezado-pedido').innerHTML = `
+            <h2>Pedido #${pedido.ID_PEDIDO || pedido.id_pedido}</h2>
+            <p><strong>Sucursal:</strong> ${pedido.SUCURSAL || pedido.sucursal} | 
+               <strong>Ruta:</strong> ${pedido.RUTA || pedido.ruta} | 
+               <strong>Fecha:</strong> ${pedido.FECHA || pedido.fecha} | 
+               <strong>Estado:</strong> ${pedido.ESTADO || pedido.estado}</p>
+          `;
+
+          // Renderizar tabla de ítems
+          const body = document.getElementById('tabla-detalle-body');
+          if (detalles && detalles.length > 0) {
+            body.innerHTML = detalles.map(d => {
+              const producto = d.PRODUCTO || d.producto || 'Sin Nombre';
+              const cantManana = d.CANT_MANANA || d.cant_manana || 0;
+              const cantResto = d.CANT_RESTO || d.cant_resto || 0;
+              const cantTarde = d.CANT_TARDE || d.cant_tarde || 0;
+              
+              const total = cantManana + cantResto + cantTarde;
+
+              // Crear lista visual con los turnos que tengan cantidad solicitada (> 0)
+              let turnosHtml = [];
+              if (cantManana > 0) turnosHtml.push(`<span class="badge-turno">Mañana: ${cantManana}</span>`);
+              if (cantResto > 0) turnosHtml.push(`<span class="badge-turno">Resto: ${cantResto}</span>`);
+              if (cantTarde > 0) turnosHtml.push(`<span class="badge-turno">Tarde: ${cantTarde}</span>`);
+
+              const desglose = turnosHtml.length > 0 ? turnosHtml.join(' ') : 'Sin cantidad especificada';
+
+              return `
+                <tr>
+                  <td><strong>${producto}</strong></td>
+                  <td>${total}</td>
+                  <td>${desglose}</td>
+                </tr>
+              `;
+            }).join('');
+          } else {
+            body.innerHTML = '<tr><td colspan="3">Este pedido no tiene productos registrados.</td></tr>';
+          }
+        } else {
+          document.getElementById('encabezado-pedido').innerHTML = `<h2>Error: ${result.message}</h2>`;
+        }
+      } catch (error) {
+        console.error('Error al obtener el detalle:', error);
+        document.getElementById('tabla-detalle-body').innerHTML = '<tr><td colspan="3">Error al cargar la información.</td></tr>';
+      }
+    });
+  </script>
+</body>
+</html>

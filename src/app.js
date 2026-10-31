@@ -45,6 +45,11 @@ app.get('/recetas', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/views/recetas.html'));
 });
 
+
+app.get('/pedidos/detalle', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/views/detalle-pedido.html'));
+});
+
 // MANEJO DE ERRORES Y RUTAS NO ENCONTRADAS (404)
 
 // Captura de rutas no definidas
