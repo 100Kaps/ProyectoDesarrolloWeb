@@ -1,4 +1,3 @@
-// Importar Firebase SDKs directamente desde CDN en formato ESM / Módulos Web
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { 
   getFirestore, 
@@ -7,11 +6,10 @@ import {
   addDoc, 
   doc, 
   updateDoc, 
-  getDoc,
   serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Coloca aquí la configuración obtenida en el Paso 1
+// Reemplaza con tus credenciales obtenidas de la consola de Firebase
 const firebaseConfig = {
   apiKey: "TU_API_KEY_AQUI",
   authDomain: "proyectodesarrolloweb-a1a36.firebaseapp.com",
@@ -21,28 +19,11 @@ const firebaseConfig = {
   appId: "TU_APP_ID_AQUI"
 };
 
-// Inicializar Firebase y Firestore
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Objeto global de API expuesto al navegador
 window.API = {
-  // 1. Obtener todos los pedidos
-  async getPedidos() {
-    try {
-      const querySnapshot = await getDocs(collection(db, "pedidos"));
-      const data = [];
-      querySnapshot.forEach((docSnap) => {
-        data.push({ id: docSnap.id, ...docSnap.data() });
-      });
-      return { success: true, data };
-    } catch (error) {
-      console.error("Error al obtener pedidos:", error);
-      return { success: false, message: error.message };
-    }
-  },
-
-  // 2. Obtener lista de sucursales
+  // Obtener Sucursales
   async getSucursales() {
     try {
       const querySnapshot = await getDocs(collection(db, "sucursales"));
@@ -57,7 +38,7 @@ window.API = {
     }
   },
 
-  // 3. Obtener lista de productos
+  // Obtener Productos
   async getProductos() {
     try {
       const querySnapshot = await getDocs(collection(db, "productos"));
@@ -72,7 +53,7 @@ window.API = {
     }
   },
 
-  // 4. Guardar / Crear un nuevo pedido en Firestore
+  // Guardar un Pedido Completo (Cabecera + Detalle)
   async crearPedido(datosPedido) {
     try {
       const docRef = await addDoc(collection(db, "pedidos"), {
@@ -83,19 +64,22 @@ window.API = {
       });
       return { success: true, id: docRef.id };
     } catch (error) {
-      console.error("Error al guardar pedido en Firebase:", error);
+      console.error("Error al crear pedido:", error);
       return { success: false, message: error.message };
     }
   },
 
-  // 5. Actualizar el estado de un pedido (por ejemplo, a ENTREGADO)
-  async actualizarEstado(idPedido, nuevoEstado) {
+  // Obtener Pedidos Registrados
+  async getPedidos() {
     try {
-      const pedidoRef = doc(db, "pedidos", idPedido);
-      await updateDoc(pedidoRef, { estado: nuevoEstado });
-      return { success: true };
+      const querySnapshot = await getDocs(collection(db, "pedidos"));
+      const data = [];
+      querySnapshot.forEach((docSnap) => {
+        data.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      return { success: true, data };
     } catch (error) {
-      console.error("Error al actualizar estado:", error);
+      console.error("Error al obtener pedidos:", error);
       return { success: false, message: error.message };
     }
   }
